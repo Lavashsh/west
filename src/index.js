@@ -116,6 +116,59 @@ class Lad extends Dog {
     }
 }
 
+class Rogue extends Creature {
+    constructor() {
+        super('Изгой', 2);
+    }
+
+    doBeforeAttack(gameContext, continuation) {
+        const {currentPlayer, oppositePlayer, updateView} = gameContext;
+        
+        // Собираем все карты на столе
+        const allCards = [...currentPlayer.table, ...oppositePlayer.table];
+        
+        // Список способностей для кражи
+        const abilities = [
+            'modifyDealedDamageToCreature',
+            'modifyDealedDamageToPlayer',
+            'modifyTakenDamage'
+        ];
+        
+        // Для каждой карты на столе
+        allCards.forEach(card => {
+            if (!card || card === this) return;
+            
+            const proto = Object.getPrototypeOf(card);
+            
+            // Проверяем, есть ли у прототипа эти методы как собственные
+            abilities.forEach(ability => {
+                if (proto.hasOwnProperty(ability)) {
+                    // Забираем способность у прототипа
+                    const method = proto[ability];
+                    delete proto[ability];
+                    
+                    // Добавляем способность себе, если её ещё нет
+                    if (!this[ability]) {
+                        this[ability] = method;
+                    }
+                }
+            });
+        });
+        
+        // Обновляем вид всех объектов
+        updateView();
+        
+        super.doBeforeAttack(gameContext, continuation);
+    }
+
+    getDescriptions() {
+        return [
+            ...super.getDescriptions(),
+            'Перед атакой крадёт способности у всех карт своего типа'
+        ];
+    }
+}
+
 // Обновленные функции проверки
 function isDuck(card) {
     return card && typeof card.quacks === 'function' && typeof card.swims === 'function';
@@ -143,11 +196,12 @@ const seriffStartDeck = [
     new Duck(),
     new Duck(),
     new Duck(),
-    new Trasher()
+    new Rogue(),
 ];
 const banditStartDeck = [
     new Lad(),
-    new Lad()
+    new Lad(),
+    new Lad(),
 ];
 
 // Создание игры с новыми колодами
