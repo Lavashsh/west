@@ -201,7 +201,75 @@ class Rogue extends Creature {
     }
 }
 
-// Обновленные функции проверки
+// 9. Псевдоутка
+class PseudoDuck extends Dog {
+    constructor() {
+        super('Псевдоутка', 3);
+    }
+    
+    quacks() {
+        console.log('quack');
+    }
+    
+    swims() {
+        console.log('float: both;');
+    }
+}
+
+// 10. Немо
+class Nemo extends Creature {
+    constructor() {
+        super('Немо', 4);
+        this.hasStolen = false;
+    }
+
+    doBeforeAttack(gameContext, continuation) {
+        if (this.hasStolen) {
+            super.doBeforeAttack(gameContext, continuation);
+            return;
+        }
+
+        const {currentPlayer, oppositePlayer, updateView} = gameContext;
+        
+        // Находим первую карту на столе
+        const allCards = [...currentPlayer.table, ...oppositePlayer.table];
+        const targetCard = allCards.find(card => card && card !== this);
+        
+        if (targetCard) {
+            // Сохраняем старый прототип
+            const oldProto = Object.getPrototypeOf(this);
+            
+            // Крадем прототип целевой карты
+            const targetProto = Object.getPrototypeOf(targetCard);
+            Object.setPrototypeOf(this, targetProto);
+            
+            // Помечаем, что уже украли
+            this.hasStolen = true;
+            
+            // Обновляем вид
+            updateView();
+            
+            // Вызываем doBeforeAttack из нового прототипа, если он есть
+            if (typeof this.doBeforeAttack === 'function' && this.doBeforeAttack !== oldProto.doBeforeAttack) {
+                this.doBeforeAttack(gameContext, () => {
+                    super.doBeforeAttack(gameContext, continuation);
+                });
+                return;
+            }
+        }
+        
+        super.doBeforeAttack(gameContext, continuation);
+    }
+
+    getDescriptions() {
+        const desc = super.getDescriptions();
+        if (!this.hasStolen) {
+            desc.push('Может украсть прототип другой карты');
+        }
+        return desc;
+    }
+}
+
 function isDuck(card) {
     return card && typeof card.quacks === 'function' && typeof card.swims === 'function';
 }
@@ -226,14 +294,11 @@ function getCreatureDescription(card) {
 
 const seriffStartDeck = [
     new Duck(),
-    new Duck(),
-    new Duck(),
-    new Rogue(),
 ];
 const banditStartDeck = [
-    new Lad(),
-    new Lad(),
-    new Lad(),
+    new Dog(),
+    new PseudoDuck(),
+    new Dog(),
 ];
 
 // Создание игры с новыми колодами
