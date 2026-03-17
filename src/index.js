@@ -58,6 +58,38 @@ class Trasher extends Dog {
     }
 }
 
+class Gatling extends Creature {
+    constructor() {
+        super('Гатлинг', 6);
+    }
+    attack(gameContext, continuation) {
+        const taskQueue = new TaskQueue();
+    
+        const {currentPlayer, oppositePlayer, position, updateView} = gameContext;
+        const oppositeTable = oppositePlayer.table;
+        for(let position = 0; position < oppositeTable.length; position++) {
+
+            taskQueue.push(onDone => this.view.showAttack(onDone));
+            taskQueue.push(onDone => {
+                const oppositeCard = oppositePlayer.table[position];
+    
+                if (oppositeCard) {
+                    this.dealDamageToCreature(2, oppositeCard, gameContext, onDone);
+                }
+            });
+        }
+    
+        taskQueue.continueWith(continuation);
+    }
+
+    getDescriptions() {
+        return [
+            ...super.getDescriptions(),
+            'наносит 2 урона по очереди всем картам противника на столе, но не атакует игрока-противника'
+        ];
+    }
+}
+
 // Обновленные функции проверки
 function isDuck(card) {
     return card && typeof card.quacks === 'function' && typeof card.swims === 'function';
@@ -86,10 +118,12 @@ const seriffStartDeck = [
     new Duck(),
     new Duck(),
     new Duck(),
-    new Duck(),
+    new Gatling(),
 ];
 const banditStartDeck = [
     new Trasher(),
+    new Dog(),
+    new Dog(),
 ];
 
 // Создание игры с новыми колодами
