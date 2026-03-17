@@ -3,12 +3,32 @@ import Game from './Game.js';
 import TaskQueue from './TaskQueue.js';
 import SpeedRate from './SpeedRate.js';
 
-// Отвечает является ли карта уткой.
-function isDuck(card) {
-    return card && card.quacks && card.swims;
+// Новые классы карт
+class Duck extends Card {
+    constructor() {
+        super('Мирная утка', 2);
+    }
+    
+    quacks() {
+        console.log('quack');
+    }
+    
+    swims() {
+        console.log('float: both;');
+    }
 }
 
-// Отвечает является ли карта собакой.
+class Dog extends Card {
+    constructor() {
+        super('Пес-бандит', 3);
+    }
+}
+
+// Обновленные функции проверки
+function isDuck(card) {
+    return card && typeof card.quacks === 'function' && typeof card.swims === 'function';
+}
+
 function isDog(card) {
     return card instanceof Dog;
 }
@@ -41,20 +61,18 @@ function Dog() {
 }
 
 
-// Колода Шерифа, нижнего игрока.
+// Новые колоды
 const seriffStartDeck = [
-    new Card('Мирный житель', 2),
-    new Card('Мирный житель', 2),
-    new Card('Мирный житель', 2),
+    new Duck(),
+    new Duck(),
+    new Duck(),
 ];
 
-// Колода Бандита, верхнего игрока.
 const banditStartDeck = [
-    new Card('Бандит', 3),
+    new Dog(),
 ];
 
-
-// Создание игры.
+// Создание игры с новыми колодами
 const game = new Game(seriffStartDeck, banditStartDeck);
 
 // Глобальный объект, позволяющий управлять скоростью всех анимаций.
