@@ -90,6 +90,64 @@ class Gatling extends Creature {
     }
 }
 
+class Lad extends Dog {
+    constructor() {
+        super('Браток', 2);
+    }
+
+    static getInGameCount() {
+        return this.inGameCount || 0;
+    }
+
+    static setInGameCount(value) {
+        this.inGameCount = value;
+    }
+
+    static getBonus() {
+        const count = this.getInGameCount();
+        return count * (count + 1) / 2;
+    }
+
+    doAfterComingIntoPlay(gameContext, continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() + 1);
+        super.doAfterComingIntoPlay(gameContext, continuation);
+    }
+
+    doBeforeRemoving(continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() - 1);
+        super.doBeforeRemoving(continuation);
+    }
+
+    modifyDealedDamageToCreature(value, toCard, gameContext, continuation) {
+        const bonus = Lad.getBonus();
+        continuation(value + bonus);
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        const bonus = Lad.getBonus();
+        const reducedValue = Math.max(value - bonus, 0);
+        
+        if (bonus > 0) {
+            this.view.signalAbility(() => {
+                continuation(reducedValue);
+            });
+        } else {
+            continuation(reducedValue);
+        }
+    }
+
+    getDescriptions() {
+        const descriptions = super.getDescriptions();
+        
+        if (Lad.prototype.hasOwnProperty('modifyDealedDamageToCreature') || 
+            Lad.prototype.hasOwnProperty('modifyTakenDamage')) {
+            descriptions.push('Чем их больше, тем они сильнее');
+        }
+        
+        return descriptions;
+    }
+}
+
 // Обновленные функции проверки
 function isDuck(card) {
     return card && typeof card.quacks === 'function' && typeof card.swims === 'function';
@@ -113,7 +171,6 @@ function getCreatureDescription(card) {
     return 'Существо';
 }
 
-// Новые колоды
 const seriffStartDeck = [
     new Duck(),
     new Duck(),
@@ -130,7 +187,7 @@ const banditStartDeck = [
 const game = new Game(seriffStartDeck, banditStartDeck);
 
 // Глобальный объект, позволяющий управлять скоростью всех анимаций.
-SpeedRate.set(1);
+SpeedRate.set(2);
 
 // Запуск игры.
 game.play(false, (winner) => {
