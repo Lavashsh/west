@@ -19,8 +19,29 @@ class Duck extends Card {
 }
 
 class Dog extends Card {
+    constructor(name = 'Пес-бандит', power = 3) {
+        super(name, power);
+    }
+}
+
+class Trasher extends Dog {
     constructor() {
-        super('Пес-бандит', 3);
+        super('Громила', 5);
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        const reducedValue = Math.max(value - 1, 0);
+        
+        this.view.signalAbility(() => {
+            continuation(reducedValue);
+        });
+    }
+
+    getDescriptions() {
+        return [
+            ...super.getDescriptions(),
+            'Получает на 1 меньше урона'
+        ];
     }
 }
 
@@ -48,28 +69,14 @@ function getCreatureDescription(card) {
 }
 
 
-
-// Основа для утки.
-function Duck() {
-    this.quacks = function () { console.log('quack') };
-    this.swims = function () { console.log('float: both;') };
-}
-
-
-// Основа для собаки.
-function Dog() {
-}
-
-
-// Новые колоды
 const seriffStartDeck = [
     new Duck(),
     new Duck(),
     new Duck(),
+    new Duck(),
 ];
-
 const banditStartDeck = [
-    new Dog(),
+    new Trasher(),
 ];
 
 // Создание игры с новыми колодами
